@@ -19,6 +19,7 @@ import TabBar, { createNewTab } from './components/TabBar'
 import useExpressionHistory from './hooks/useExpressionHistory'
 import { deduplicateArray } from './lib/resultPanelLogic.js'
 import ImportMenu, { useDropImport } from './components/ImportMenu'
+import JsonSearchBar from './components/JsonSearchBar'
 import './App.css'
 
 // 把查询能力暴露给 preload 注册的 MCP 工具（jsonpath_query / jmespath_query）
@@ -43,6 +44,8 @@ export default function App () {
   const [tabs, setTabs] = useState(() => [createNewTab(0)])
   const [activeTabId, setActiveTabId] = useState(tabs[0].id)
   const [action, setAction] = useState(null)
+  const [inputSearchOpen, setInputSearchOpen] = useState(false)
+  const textareaRef = useRef(null)
   const { history, addToHistory } = useExpressionHistory()
   const dropHandlers = useDropImport((text) => {
     updateTab(activeTabId, { jsonText: formatJson(text) })
@@ -198,6 +201,35 @@ export default function App () {
     updateTab(activeTabId, { diffTarget: null })
   }, [activeTabId, updateTab])
 
+  // 输入区搜索
+  const handleScrollToMatch = useCallback(({ line }) => {
+    const el = textareaRef.current
+    if (!el) return
+    const lines = el.value.split('\n')
+    // 估算滚动位置（每行约 20px）
+    const lineHeight = 20
+    el.scrollTop = (line - 1) * lineHeight
+    // 选中匹配行
+    let startPos = 0
+    for (let i = 0; i < line - 1; i++) {
+      startPos += lines[i].length + 1
+    }
+    el.focus()
+    el.setSelectionRange(startPos, startPos + lines[line - 1].length)
+  }, [])
+
+  // Ctrl+F 打开搜索
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setInputSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   // Tab 操作
   const handleTabAdd = useCallback(() => {
     const t = createNewTab(tabs.length)
@@ -245,10 +277,18 @@ export default function App () {
 
       <div className='json-panes'>
         <Pane title='输入' className='json-pane' {...dropHandlers}>
+          {inputSearchOpen && (
+            <JsonSearchBar
+              text={jsonText}
+              onScrollTo={handleScrollToMatch}
+              onClose={() => setInputSearchOpen(false)}
+            />
+          )}
           <Textarea
+            ref={textareaRef}
             className='json-input'
             value={jsonText}
-            placeholder='在此粘贴 JSON，或通过 uTools 选中文本/文件进入'
+            placeholder='在此粘贴 JSON，或通过 uTools 选中文件/文本进入 (Ctrl+F 搜索)'
             onChange={(e) => updateTab(activeTabId, { jsonText: e.target.value })}
           />
         </Pane>

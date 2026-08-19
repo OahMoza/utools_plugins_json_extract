@@ -607,3 +607,35 @@
 .diff-path { color: var(--text-primary); flex: 1; }
 .diff-value { color: var(--success); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .diff-from { color: var(--text-muted); font-size: 11px; }
+
+/* ===== 输入区搜索 ===== */
+.json-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--accent-glow);
+  border-bottom: 1px solid var(--accent);
+  flex-shrink: 0;
+}
+.json-search-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  outline: none;
+}
+.json-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+.json-search-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: right;
+}
