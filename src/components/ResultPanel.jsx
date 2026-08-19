@@ -1,6 +1,7 @@
-// ResultPanel —— 查询结果面板：工具栏 + 树形/代码双视图可切换
+// ResultPanel —— 查询结果面板：工具栏 + 树形/代码/差异 三视图可切换
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { highlightJson } from '@ztools/json-tooling'
+import { diff as jsonDiff } from '../jsonPatch.js'
 import { findMatches } from '../lib/resultPanelLogic.js'
 import TreeView from './TreeView'
 
@@ -16,6 +17,7 @@ const FilterIcon = () => <Icon><polygon points='22 3 2 3 10 12.46 10 19 14 21 14
 const SearchIcon = () => <Icon><circle cx='11' cy='11' r='8' stroke='currentColor' strokeWidth='2'/><path d='M21 21l-4.35-4.35' stroke='currentColor' strokeWidth='2' strokeLinecap='round'/></Icon>
 const TreeIcon = () => <Icon><path d='M12 2v8M5 10l7 7 7-7M5 22h14' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/></Icon>
 const CodeIcon = () => <Icon><polyline points='16 18 22 12 16 6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/><polyline points='8 6 2 12 8 18' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/></Icon>
+const DiffIcon = () => <Icon><path d='M12 3v18M3 12h18' stroke='currentColor' strokeWidth='2' strokeLinecap='round'/></Icon>
 const ChevUp = () => <Icon size={14}><polyline points='18 15 12 9 6 15' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/></Icon>
 const ChevDown = () => <Icon size={14}><polyline points='6 9 12 15 18 9' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/></Icon>
 const XIcon = () => <Icon size={14}><path d='M18 6L6 18M6 6l12 12' stroke='currentColor' strokeWidth='2' strokeLinecap='round'/></Icon>
@@ -29,9 +31,11 @@ export default function ResultPanel({
   isDeduped,
   onToggleDedup,
   onCopy,
-  onExport
+  onExport,
+  diffTarget = null,
+  onDiffChange
 }) {
-  // 视图模式：'tree' | 'code'
+  // 视图模式：'tree' | 'code' | 'diff'
   const [view, setView] = useState('tree')
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -44,6 +48,16 @@ export default function ResultPanel({
   const [activeIdx, setActiveIdx] = useState(0)
   const activeMatch = searchMatches[activeIdx] ?? null
   const activeLine = activeMatch?.line ?? null
+
+  // Diff 计算
+  const diffResult = useMemo(() => {
+    if (!diffTarget || !content) return null
+    try {
+      const a = JSON.parse(diffTarget)
+      const b = JSON.parse(content)
+      return jsonDiff(a, b)
+    } catch { return null }
+  }, [content, diffTarget])
 
   const openSearch = useCallback(() => setSearchOpen(true), [])
   const closeSearch = useCallback(() => { setSearchOpen(false); setSearchQuery(''); setActiveIdx(0) }, [])
@@ -97,9 +111,9 @@ export default function ResultPanel({
               onClick={() => setView('tree')} title='树形视图'>
               <TreeIcon /> 树
             </button>
-            <button className={`ui-btn ui-btn-sm ${view === 'code' ? 'ui-btn-accent' : ''}`}
-              onClick={() => setView('code')} title='代码视图'>
-              <CodeIcon /> 代码
+            <button className={`ui-btn ui-btn-sm ${view === 'diff' ? 'ui-btn-accent' : ''}`}
+              onClick={() => setView('diff')} title='差异对比'>
+              <DiffIcon /> 差异
             </button>
           </span>
         </div>
@@ -137,7 +151,31 @@ export default function ResultPanel({
       )}
 
       {/* 视图区 */}
-      {view === 'tree' ? (
+      {view === 'diff' ? (
+        <div className='result-diff-wrap'>
+          {!diffTarget || !diffResult
+            ? (
+              <div className='json-empty'>暂无对比数据（使用「对比剪贴板」或「对比 Tab」添加对比目标）</div>
+              )
+            : diffResult.length === 0
+              ? (
+                <div className='json-empty'>✓ 两个 JSON 完全相同</div>
+                )
+              : (
+                <div className='diff-list'>
+                  <div className='diff-header'>差异（{diffResult.length} 项操作）</div>
+                  {diffResult.map((op, i) => (
+                    <div key={i} className={`diff-item diff-${op.op}`}>
+                      <span className='diff-op'>{op.op}</span>
+                      <span className='diff-path'>{op.path}</span>
+                      {op.value !== undefined && <span className='diff-value'>{JSON.stringify(op.value)}</span>}
+                      {op.from && <span className='diff-from'>← {op.from}</span>}
+                    </div>
+                  ))}
+                </div>
+                )}
+        </div>
+      ) : view === 'tree' ? (
         <div className='result-tree-wrap'>
           <TreeView nodes={nodes} searchQuery={searchQuery} searchOpen={searchOpen} />
         </div>

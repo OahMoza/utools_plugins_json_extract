@@ -180,6 +180,18 @@ export default function App () {
     })
   }, [activeTabId, updateTab])
 
+  // Diff 对比
+  const handleCompareClipboard = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      updateTab(activeTabId, { diffTarget: text })
+    } catch { /* 剪贴板不可用 */ }
+  }, [activeTabId, updateTab])
+
+  const handleClearDiff = useCallback(() => {
+    updateTab(activeTabId, { diffTarget: null })
+  }, [activeTabId, updateTab])
+
   // Tab 操作
   const handleTabAdd = useCallback(() => {
     const t = createNewTab(tabs.length)
@@ -259,6 +271,7 @@ export default function App () {
                 onToggleDedup={handleToggleDedup}
                 onCopy={handleCopyResult}
                 onExport={handleExport}
+                diffTarget={activeTab.diffTarget}
               />
             )
           ) : parseState.ok ? (
