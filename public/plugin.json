@@ -15,10 +15,19 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "json": { "type": "string", "description": "要查询的 JSON 字符串" },
-          "expression": { "type": "string", "description": "JMESPath 表达式，如 'items[?price > 100].name'" }
+          "json": {
+            "type": "string",
+            "description": "要查询的 JSON 字符串"
+          },
+          "expression": {
+            "type": "string",
+            "description": "JMESPath 表达式，如 'items[?price > 100].name'"
+          }
         },
-        "required": ["json", "expression"]
+        "required": [
+          "json",
+          "expression"
+        ]
       }
     },
     "jsonpath_query": {
@@ -26,51 +35,28 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "json": { "type": "string", "description": "要查询的 JSON 字符串" },
-          "expression": { "type": "string", "description": "JSONPath 表达式，如 '$.data.users[*]'" }
+          "json": {
+            "type": "string",
+            "description": "要查询的 JSON 字符串"
+          },
+          "expression": {
+            "type": "string",
+            "description": "JSONPath 表达式，如 '$.data.users[*]'"
+          }
         },
-        "required": ["json", "expression"]
+        "required": [
+          "json",
+          "expression"
+        ]
       }
     }
   },
   "features": [
     {
       "code": "json",
-      "explain": "JSON 工具：格式化、压缩、校验、JSONPath / JMESPath 双引擎查询",
+      "explain": "JSON 数据提取工具（JSONPath / JMESPath 双引擎）",
       "cmds": [
-        "json",
-        "JSON工具",
-        "json格式化"
-      ]
-    },
-    {
-      "code": "json_format",
-      "explain": "对选中文本进行 JSON 格式化 / 压缩",
-      "mainHide": true,
-      "cmds": [
-        {
-          "type": "over",
-          "label": "JSON 格式化"
-        },
-        {
-          "type": "regex",
-          "match": "^\\s*[{\\[]",
-          "label": "JSON 格式化",
-          "minLength": 2
-        }
-      ]
-    },
-    {
-      "code": "json_file",
-      "explain": "读取并打开 JSON 文件",
-      "cmds": [
-        {
-          "type": "files",
-          "fileType": "file",
-          "maxLength": 1,
-          "label": "用 JSON 工具打开",
-          "allowFiles": "*.json"
-        }
+        "json"
       ]
     }
   ]

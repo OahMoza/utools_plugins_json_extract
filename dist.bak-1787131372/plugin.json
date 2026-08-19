@@ -1,0 +1,77 @@
+{
+  "name": "utools-plugins-json",
+  "title": "JSON双路径提取器",
+  "description": "支持JSONPath和JMESPath的JSON数据提取工具，支持实时查询、语法高亮、路径生成、格式化/压缩",
+  "version": "1.0.0",
+  "main": "index.html",
+  "preload": "preload/services.js",
+  "logo": "logo.png",
+  "development": {
+    "main": "http://localhost:5173"
+  },
+  "tools": {
+    "jmespath_query": {
+      "description": "使用 JMESPath 表达式从 JSON 数据中提取字段。适用于结构化数据的深度查询，如提取嵌套对象、数组过滤、投影等。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "json": { "type": "string", "description": "要查询的 JSON 字符串" },
+          "expression": { "type": "string", "description": "JMESPath 表达式，如 'items[?price > 100].name'" }
+        },
+        "required": ["json", "expression"]
+      }
+    },
+    "jsonpath_query": {
+      "description": "使用 JSONPath 表达式从 JSON 数据中提取字段。适用于类似 XPath 的路径查询，如 '$.store.book[*].author'。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "json": { "type": "string", "description": "要查询的 JSON 字符串" },
+          "expression": { "type": "string", "description": "JSONPath 表达式，如 '$.data.users[*]'" }
+        },
+        "required": ["json", "expression"]
+      }
+    }
+  },
+  "features": [
+    {
+      "code": "json",
+      "explain": "JSON 工具：格式化、压缩、校验、JSONPath / JMESPath 双引擎查询",
+      "cmds": [
+        "json",
+        "JSON工具",
+        "json格式化"
+      ]
+    },
+    {
+      "code": "json_format",
+      "explain": "对选中文本进行 JSON 格式化 / 压缩",
+      "mainHide": true,
+      "cmds": [
+        {
+          "type": "over",
+          "label": "JSON 格式化"
+        },
+        {
+          "type": "regex",
+          "match": "^\\s*[{\\[]",
+          "label": "JSON 格式化",
+          "minLength": 2
+        }
+      ]
+    },
+    {
+      "code": "json_file",
+      "explain": "读取并打开 JSON 文件",
+      "cmds": [
+        {
+          "type": "files",
+          "fileType": "file",
+          "maxLength": 1,
+          "label": "用 JSON 工具打开",
+          "allowFiles": "*.json"
+        }
+      ]
+    }
+  ]
+}
