@@ -8,6 +8,8 @@ import {
   query,
   jsonToTree
 } from '@ztools/json-tooling'
+import { parseWithFallback } from './json5Parser.js'
+import { validate } from './schemaValidator.js'
 import { Button, Textarea, Toolbar, Pane } from '@ztools/ui-kit'
 import TreeView from './components/TreeView'
 import ResultPanel from './components/ResultPanel'
@@ -57,15 +59,19 @@ export default function App () {
   }, [])
 
   // 解析结果
+  // 解析结果（支持 JSON5 容错 fallback）
   const parseState = useMemo(() => {
-    const err = getJsonErrorPosition(jsonText)
-    if (err) {
-      return { ok: false, error: err, html: highlightJson(escapeRaw(jsonText)), data: null, elapsed: 0 }
+    if (!jsonText.trim()) {
+      return { ok: false, error: null, html: '', data: null, elapsed: 0, usedJSON5: false }
     }
     const t0 = performance.now()
-    const formatted = formatJson(jsonText)
+    const result = parseWithFallback(jsonText)
     const elapsed = Math.round(performance.now() - t0)
-    return { ok: true, error: null, html: highlightJson(formatted), data: JSON.parse(formatted), elapsed }
+    if (result.error || result.data === undefined) {
+      return { ok: false, error: { message: result.error }, html: highlightJson(escapeRaw(jsonText)), data: null, elapsed, usedJSON5: false }
+    }
+    const formatted = formatJson(jsonText)
+    return { ok: true, error: null, html: highlightJson(formatted), data: result.data, elapsed, usedJSON5: result.usedJSON5 }
   }, [jsonText])
 
   // 树（无表达式时展示）
@@ -298,6 +304,7 @@ export default function App () {
         queryElapsed={queryState?.elapsed}
         fileSize={jsonText.length}
         isLargeFile={isLargeFile}
+        usedJSON5={parseState.usedJSON5}
       />
     </div>
   )
