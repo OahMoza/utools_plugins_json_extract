@@ -5,13 +5,17 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test src/lib/__tests__/*.test.js"
+    "test": "node --test src/pathGenerator.test.js src/jsonPatch.test.js src/json5Parser.test.js src/schemaValidator.test.js vendor/@ztools/json-tooling/__tests__/*.test.js"
   },
   "dependencies": {
     "@ztools/json-tooling": "file:vendor/@ztools/json-tooling",
+    "@ztools/ui-kit": "file:vendor/@ztools/ui-kit",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "fast-json-patch": "^3.1.1",
+    "json5": "^2.2.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@ztools/ui-kit": "file:vendor/@ztools/ui-kit"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.8",
