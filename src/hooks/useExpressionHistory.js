@@ -1,8 +1,8 @@
 // useExpressionHistory —— 查询历史 + 收藏，持久化到 utools.dbStorage（localStorage 兜底）
 // 移植自 ztools-plugins-json/src/hooks/useExpressionHistory.ts
 import { useState, useEffect, useCallback } from 'react'
+import { addHistory, addFavorite, removeFavorite, clearHistory as clearHistoryList } from '../lib/history.js'
 
-const MAX_HISTORY = 50
 const KEY_H = 'json:history'
 const KEY_F = 'json:favorites'
 
@@ -39,26 +39,20 @@ export default function useExpressionHistory() {
   const addToHistory = useCallback((expression, engine) => {
     if (!expression.trim()) return
     const entry = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, expression, engine, createdAt: Date.now() }
-    setHistory(prev => {
-      const filtered = prev.filter(e => !(e.expression === expression && e.engine === engine))
-      return [entry, ...filtered].slice(0, MAX_HISTORY)
-    })
+    setHistory(prev => addHistory(prev, entry))
   }, [])
 
   const addToFavorites = useCallback((expression, engine, name) => {
     if (!expression.trim()) return
     const entry = { id: `fav-${Date.now()}`, expression, engine, name, createdAt: Date.now() }
-    setFavorites(prev => {
-      const filtered = prev.filter(e => !(e.expression === expression && e.engine === engine))
-      return [entry, ...filtered]
-    })
+    setFavorites(prev => addFavorite(prev, entry))
   }, [])
 
   const removeFromFavorites = useCallback((id) => {
-    setFavorites(prev => prev.filter(e => e.id !== id))
+    setFavorites(prev => removeFavorite(prev, id))
   }, [])
 
-  const clearHistory = useCallback(() => setHistory([]), [])
+  const clearHistory = useCallback(() => setHistory(clearHistoryList()), [])
 
   return { history, favorites, addToHistory, addToFavorites, removeFromFavorites, clearHistory }
 }

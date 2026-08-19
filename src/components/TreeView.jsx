@@ -2,6 +2,7 @@
 // 移植自 ztools-plugins-json/src/components/JsonTreeView.tsx，接入 ui-kit 设计令牌
 import { useState, useCallback, useMemo } from 'react'
 import { getNodeValue } from '@ztools/json-tooling'
+import { collectMatchPaths, computeInitialCollapsed, toggleInSet } from '../lib/treeViewLogic.js'
 
 const TYPE_TAG = {
   object: { label: 'OBJ', var: '--jl-bracket' },
@@ -168,50 +169,18 @@ export default function TreeView({ nodes, onNodeClick, onCopyPath, searchQuery =
   // 搜索匹配：收集匹配 searchQuery 的节点路径集合
   const matchPaths = useMemo(() => {
     if (!searchOpen || !searchQuery.trim()) return null
-    const q = searchQuery.toLowerCase()
-    const set = new Set()
-    const walk = (list) => list.forEach(n => {
-      const keyStr = String(n.key).toLowerCase()
-      const valStr = String(n.value).toLowerCase()
-      if (keyStr.includes(q) || valStr.includes(q)) set.add(n.path)
-      if (n.children) walk(n.children)
-    })
-    walk(nodes)
-    return set
+    const set = collectMatchPaths(nodes, searchQuery)
+    return set.size > 0 ? set : null
   }, [nodes, searchQuery, searchOpen])
 
   // 折叠状态：Set of path。初始化时 childCount>5 的节点默认折叠；
   // 搜索时，匹配节点的祖先自动展开，其余折叠
-  const [collapsed, setCollapsed] = useState(() => {
-    const set = new Set()
-    if (searchOpen && searchQuery.trim() && matchPaths) {
-      // 搜索模式：折叠全部，只展开匹配节点的祖先
-      const walk = (list) => list.forEach(n => {
-        if (n.children) { set.add(n.path); walk(n.children) }
-      })
-      walk(nodes)
-      const expandAncestors = (list, ancestors = []) => list.forEach(n => {
-        if (matchPaths.has(n.path)) ancestors.forEach(p => set.delete(p))
-        if (n.children) expandAncestors(n.children, [...ancestors, n.path])
-      })
-      expandAncestors(nodes)
-    } else {
-      const walk = (list) => list.forEach(n => {
-        if (n.collapsed) set.add(n.path)
-        if (n.children) walk(n.children)
-      })
-      walk(nodes)
-    }
-    return set
-  })
+  const [collapsed, setCollapsed] = useState(() =>
+    computeInitialCollapsed(nodes, searchOpen, searchQuery)
+  )
 
   const handleToggle = useCallback((path) => {
-    setCollapsed(prev => {
-      const next = new Set(prev)
-      if (next.has(path)) next.delete(path)
-      else next.add(path)
-      return next
-    })
+    setCollapsed(prev => toggleInSet(prev, path))
   }, [])
 
   if (!nodes || nodes.length === 0) {

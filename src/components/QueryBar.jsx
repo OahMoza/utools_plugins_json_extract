@@ -1,6 +1,7 @@
 // QueryBar —— 引擎切换 + 表达式输入 + 历史下拉
 // 移植自 ztools-plugins-json/src/components/QueryBar.tsx
 import { useState, useRef, useEffect } from 'react'
+import { filterHistory } from '../lib/queryBarLogic.js'
 
 export default function QueryBar({ engine, expression, onEngineChange, onExpressionChange, history = [], onSelectHistory }) {
   const [focused, setFocused] = useState(false)
@@ -16,7 +17,7 @@ export default function QueryBar({ engine, expression, onEngineChange, onExpress
   }, [])
 
   const filtered = focused && history.length > 0
-    ? history.filter(h => h.engine === engine && h.expression.includes(expression.trim())).slice(0, 8)
+    ? filterHistory(history, engine, expression)
     : []
 
   return (

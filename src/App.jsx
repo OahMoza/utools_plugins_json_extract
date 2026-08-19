@@ -15,6 +15,7 @@ import QueryBar from './components/QueryBar'
 import StatusBar from './components/StatusBar'
 import TabBar, { createNewTab } from './components/TabBar'
 import useExpressionHistory from './hooks/useExpressionHistory'
+import { deduplicateArray } from './lib/resultPanelLogic.js'
 import ImportMenu, { useDropImport } from './components/ImportMenu'
 import './App.css'
 
@@ -35,17 +36,6 @@ const SAMPLE = JSON.stringify(
   null,
   2
 )
-
-// 数组去重（JSON.stringify 作 key）
-function deduplicateArray(arr) {
-  const seen = new Set()
-  return arr.filter((item) => {
-    const key = JSON.stringify(item)
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
-}
 
 export default function App () {
   const [tabs, setTabs] = useState(() => [createNewTab(0)])

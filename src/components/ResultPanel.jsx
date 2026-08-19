@@ -1,6 +1,7 @@
 // ResultPanel —— 查询结果面板：工具栏 + 树形/代码双视图可切换
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { highlightJson } from '@ztools/json-tooling'
+import { findMatches } from '../lib/resultPanelLogic.js'
 import TreeView from './TreeView'
 
 // 内联 SVG
@@ -18,25 +19,6 @@ const CodeIcon = () => <Icon><polyline points='16 18 22 12 16 6' stroke='current
 const ChevUp = () => <Icon size={14}><polyline points='18 15 12 9 6 15' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/></Icon>
 const ChevDown = () => <Icon size={14}><polyline points='6 9 12 15 18 9' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/></Icon>
 const XIcon = () => <Icon size={14}><path d='M18 6L6 18M6 6l12 12' stroke='currentColor' strokeWidth='2' strokeLinecap='round'/></Icon>
-
-function findMatches(text, query) {
-  if (!query) return []
-  const lines = text.split('\n')
-  const matches = []
-  let offset = 0
-  const q = query.toLowerCase()
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    const lower = line.toLowerCase()
-    let idx = 0
-    while ((idx = lower.indexOf(q, idx)) !== -1) {
-      matches.push({ line: i + 1, lineOffset: idx, length: query.length, globalOffset: offset + idx })
-      idx += q.length
-    }
-    offset += line.length + 1
-  }
-  return matches
-}
 
 export default function ResultPanel({
   nodes,
