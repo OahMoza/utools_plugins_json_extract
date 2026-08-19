@@ -170,6 +170,16 @@ export default function App () {
     }
   }, [activeTabId])
 
+  // 路径生成器：点击树节点 → 填入查询框 + 复制 Pointer
+  const handleGeneratePath = useCallback(({ jsonpath, jsonpointer }) => {
+    updateTab(activeTabId, { expression: jsonpath })
+    // 复制 JSON Pointer 到剪贴板
+    const textToCopy = jsonpointer || jsonpath
+    navigator.clipboard?.writeText(textToCopy).catch(() => {
+      window.utools?.copyText?.(textToCopy)
+    })
+  }, [activeTabId, updateTab])
+
   // Tab 操作
   const handleTabAdd = useCallback(() => {
     const t = createNewTab(tabs.length)
@@ -252,7 +262,7 @@ export default function App () {
               />
             )
           ) : parseState.ok ? (
-            <TreeView nodes={tree} />
+            <TreeView nodes={tree} onGeneratePath={handleGeneratePath} />
           ) : (
             <div className='json-empty'>输入合法 JSON 后，树形视图将显示在这里</div>
           )}

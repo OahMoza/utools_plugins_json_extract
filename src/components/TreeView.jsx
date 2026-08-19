@@ -2,6 +2,7 @@
 // 移植自 ztools-plugins-json/src/components/JsonTreeView.tsx，接入 ui-kit 设计令牌
 import { useState, useCallback, useMemo } from 'react'
 import { getNodeValue } from '@ztools/json-tooling'
+import { generatePaths } from '../pathGenerator.js'
 import { collectMatchPaths, computeInitialCollapsed, toggleInSet } from '../lib/treeViewLogic.js'
 
 const TYPE_TAG = {
@@ -165,7 +166,7 @@ function TreeNodeItem({ node, depth, collapsed, onToggle, onCopyPath, onNodeClic
   )
 }
 
-export default function TreeView({ nodes, onNodeClick, onCopyPath, searchQuery = '', searchOpen = false }) {
+export default function TreeView({ nodes, onNodeClick, onCopyPath, onGeneratePath, searchQuery = '', searchOpen = false }) {
   // 搜索匹配：收集匹配 searchQuery 的节点路径集合
   const matchPaths = useMemo(() => {
     if (!searchOpen || !searchQuery.trim()) return null
@@ -200,7 +201,13 @@ export default function TreeView({ nodes, onNodeClick, onCopyPath, searchQuery =
           collapsedSet={collapsed}
           onToggle={handleToggle}
           onCopyPath={onCopyPath}
-          onNodeClick={onNodeClick}
+          onNodeClick={(path) => {
+            onNodeClick?.(path)
+            if (onGeneratePath) {
+              const paths = generatePaths(node)
+              onGeneratePath(paths)
+            }
+          }}
           isMatch={matchPaths ? matchPaths.has(node.path) : false}
         />
       ))}
