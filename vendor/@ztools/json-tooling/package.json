@@ -1,0 +1,15 @@
+{
+  "name": "@ztools/json-tooling",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "description": "JSON 双路径查询工具：JSONPath / JMESPath 双引擎 + 语法高亮 + 路径生成（从 ztools-plugins-json / format-converter 抽取）",
+  "dependencies": {
+    "jmespath": "^0.16.0",
+    "jsonpath-plus": "^10.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node --test __tests__/*.test.js"
+  }
+}
