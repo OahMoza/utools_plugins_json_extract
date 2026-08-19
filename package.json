@@ -1,5 +1,5 @@
 {
-  "name": "plugins-json",
+  "name": "json_extract",
   "version": "1.0.0",
   "type": "module",
   "scripts": {

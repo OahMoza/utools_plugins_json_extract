@@ -56,7 +56,8 @@
       "code": "json",
       "explain": "JSON 数据提取工具（JSONPath / JMESPath 双引擎）",
       "cmds": [
-        "json"
+        "jsonpath",
+        "jmespath"
       ]
     }
   ]
