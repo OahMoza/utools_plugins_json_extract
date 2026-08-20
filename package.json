@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test src/pathGenerator.test.js src/jsonPatch.test.js src/json5Parser.test.js src/schemaValidator.test.js vendor/@ztools/json-tooling/__tests__/*.test.js"
+    "test": "node --test src/pathGenerator.test.js src/jsonPatch.test.js src/json5Parser.test.js src/schemaValidator.test.js src/lib/__tests__/treeViewLogic.test.js src/lib/__tests__/resultPanelLogic.test.js src/lib/__tests__/queryBarLogic.test.js src/lib/__tests__/history.test.js vendor/@ztools/json-tooling/__tests__/*.test.js"
   },
   "dependencies": {
     "@ztools/json-tooling": "file:vendor/@ztools/json-tooling",

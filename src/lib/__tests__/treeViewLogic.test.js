@@ -5,7 +5,10 @@ import assert from 'node:assert/strict'
 import {
   collectMatchPaths,
   computeInitialCollapsed,
-  toggleInSet
+  toggleInSet,
+  nodeMatches,
+  filterTree,
+  countMatches
 } from '../treeViewLogic.js'
 
 // 构造一个简单树（与 @ztools/json-tooling 的 jsonToTree 输出同形状）
@@ -133,4 +136,70 @@ test('toggleInSet：展开 → 折叠', () => {
   const next = toggleInSet(original, '$.meta')
   assert.ok(next.has('$.meta'))
   assert.ok(!original.has('$.meta'))
+})
+
+// ===== filterTree / countMatches（过滤式提取）=====
+
+test('filterTree：空查询返回原树', () => {
+  const tree = buildTree()
+  assert.equal(filterTree(tree, ''), tree)
+  assert.equal(filterTree(tree, '   '), tree)
+})
+
+test('filterTree：只保留命中节点及其祖先路径', () => {
+  const tree = buildTree()
+  const filtered = filterTree(tree, 'Alice')
+  // 根仍在，users 仍在（祖先），users[0] 仍在（祖先），name=Alice 命中
+  assert.ok(filtered[0].key === '$')
+  const users = filtered[0].children.find(c => c.key === 'users')
+  assert.ok(users, '祖先 users 应保留')
+  const u0 = users.children.find(c => c.key === 0)
+  assert.ok(u0, '祖先 users[0] 应保留')
+  const name = u0.children.find(c => c.key === 'name')
+  assert.ok(name && name.value === 'Alice', '命中节点保留')
+  // 非祖先分支（users[1]、meta）应被丢弃
+  assert.ok(!users.children.find(c => c.key === 1), '非祖先分支 users[1] 应丢弃')
+})
+
+test('filterTree：按 value 命中', () => {
+  const tree = buildTree()
+  const filtered = filterTree(tree, 'Bob')
+  const users = filtered[0].children.find(c => c.key === 'users')
+  // 只有 users[1]（含 Bob）这条分支保留
+  assert.equal(users.children.length, 1)
+  assert.equal(users.children[0].key, 1)
+})
+
+test('filterTree：无匹配返回空数组', () => {
+  const filtered = filterTree(buildTree(), 'zzz')
+  assert.equal(filtered.length, 0)
+})
+
+test('filterTree：容器只匹配 key，不匹配 String(undefined) value', () => {
+  // 查询 "undefined" 不应命中任何容器节点（value 为 undefined）
+  const filtered = filterTree(buildTree(), 'undefined')
+  assert.equal(filtered.length, 0)
+})
+
+test('countMatches：统计真正命中的节点数', () => {
+  assert.equal(countMatches(buildTree(), 'name'), 2) // 两个 name 节点
+  assert.equal(countMatches(buildTree(), 'Alice'), 1)
+  assert.equal(countMatches(buildTree(), 'zzz'), 0)
+  assert.equal(countMatches(buildTree(), ''), 0)
+})
+
+test('nodeMatches：大小写不敏感 key 匹配', () => {
+  const node = { key: 'UserName', type: 'string', value: 'x' }
+  assert.ok(nodeMatches(node, 'user'))
+  assert.ok(nodeMatches(node, 'USER'))
+})
+
+test('nodeMatches：标量 value 匹配', () => {
+  const node = { key: 'k', type: 'string', value: 'Alice' }
+  assert.ok(nodeMatches(node, 'lic'))
+})
+
+test('nodeMatches：容器（object）不匹配自身 value', () => {
+  const node = { key: 'data', type: 'object', value: undefined }
+  assert.ok(!nodeMatches(node, 'undefined'))
 })

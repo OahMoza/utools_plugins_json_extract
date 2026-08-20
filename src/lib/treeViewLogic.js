@@ -52,3 +52,49 @@ export function toggleInSet (collapsedSet, path) {
   else next.add(path)
   return next
 }
+
+// 单个节点是否命中查询（key 或标量 value 子串，大小写不敏感）
+// 容器（object/array）只匹配 key，避免 String(undefined) 误匹配
+export function nodeMatches (node, query) {
+  if (!query || !query.trim()) return false
+  const q = query.toLowerCase()
+  if (String(node.key ?? '').toLowerCase().includes(q)) return true
+  const v = node.value
+  if (v != null && typeof v !== 'object') {
+    return String(v).toLowerCase().includes(q)
+  }
+  return false
+}
+
+// 过滤式提取：只保留命中节点及其祖先路径，返回新树。
+// 未命中且无命中后代的节点被丢弃，从而让结果只呈现匹配项（祖先仅作路径上下文）。
+export function filterTree (nodes, query) {
+  if (!query || !query.trim()) return nodes
+  const walk = (list) => {
+    const out = []
+    for (const node of list) {
+      const selfMatch = nodeMatches(node, query)
+      let children = []
+      if (node.children) children = walk(node.children)
+      if (selfMatch || children.length > 0) {
+        const next = { ...node }
+        if (node.children) next.children = children
+        out.push(next)
+      }
+    }
+    return out
+  }
+  return walk(nodes)
+}
+
+// 统计命中节点数（仅真正命中的节点，不含仅作上下文保留的祖先）
+export function countMatches (nodes, query) {
+  if (!query || !query.trim()) return 0
+  let count = 0
+  const walk = (list) => list.forEach(n => {
+    if (nodeMatches(n, query)) count++
+    if (n.children) walk(n.children)
+  })
+  walk(nodes)
+  return count
+}

@@ -11,7 +11,6 @@ import {
 import { parseWithFallback } from './json5Parser.js'
 import { validate } from './schemaValidator.js'
 import { Button, Textarea, Toolbar, Pane } from '@ztools/ui-kit'
-import TreeView from './components/TreeView'
 import ResultPanel from './components/ResultPanel'
 import QueryBar from './components/QueryBar'
 import StatusBar from './components/StatusBar'
@@ -114,6 +113,9 @@ export default function App () {
     return JSON.stringify(displayData, null, 2)
   }, [displayData])
 
+  // 查询结果为空（有表达式但没匹配）
+  const queryEmpty = hasExpr && queryState && queryState.error == null && queryState.data == null
+
   // 查询结果的树节点（ResultPanel 用树形展示）
   const resultTree = useMemo(() => {
     if (displayData == null) return []
@@ -189,17 +191,30 @@ export default function App () {
     })
   }, [activeTabId, updateTab])
 
-  // Diff 对比
-  const handleCompareClipboard = useCallback(async () => {
-    try {
-      const text = await navigator.clipboard.readText()
-      updateTab(activeTabId, { diffTarget: text })
-    } catch { /* 剪贴板不可用 */ }
+  // 差异对比：仅对比其他 TAB（diffTarget 存目标 tabId）
+  const handleDiffTargetChange = useCallback((tabId) => {
+    updateTab(activeTabId, { diffTarget: tabId })
   }, [activeTabId, updateTab])
 
-  const handleClearDiff = useCallback(() => {
-    updateTab(activeTabId, { diffTarget: null })
+  // 差异对比模式：'exact' 完全/有序，'content' 内容/无序
+  const handleDiffModeChange = useCallback((mode) => {
+    updateTab(activeTabId, { diffMode: mode })
   }, [activeTabId, updateTab])
+
+  // 当前对比目标 tab 的内容（用于 ResultPanel 的 diff 渲染）
+  const diffContent = useMemo(() => {
+    const targetId = activeTab.diffTarget
+    if (!targetId) return null
+    const targetTab = tabs.find(t => t.id === targetId)
+    if (!targetTab) return null
+    // 取目标 tab 的展示 JSON（与其右侧面板一致）
+    if (!targetTab.jsonText.trim()) return null
+    try {
+      return JSON.stringify(parseWithFallback(targetTab.jsonText).data ?? JSON.parse(targetTab.jsonText), null, 2)
+    } catch {
+      return null
+    }
+  }, [activeTab.diffTarget, tabs])
 
   // 输入区搜索
   const handleScrollToMatch = useCallback(({ line }) => {
@@ -294,37 +309,42 @@ export default function App () {
         </Pane>
 
         <Pane
-          title={hasExpr ? `查询结果 (${queryState?.count ?? 0} 项)` : '树形视图'}
+          title={hasExpr ? `查询结果 (${queryState?.count ?? 0} 项)` : '预览'}
           className='json-pane'
         >
-          {hasExpr ? (
-            !queryState ? (
-              <div className='json-empty'>查询中…</div>
-            ) : queryState.error ? (
+          {hasExpr && queryState?.error
+            ? (
               <div className='json-result-error'>
                 <span className='ui-badge ui-badge-error'>{queryState.error}</span>
               </div>
-            ) : displayData == null ? (
-              <div className='json-empty'>未匹配到结果</div>
-            ) : (
-              <ResultPanel
-                nodes={resultTree}
-                content={displayJson}
-                count={queryState.count}
-                elapsed={queryState.elapsed}
-                isArray={Array.isArray(queryState.data)}
-                isDeduped={queryState.deduped}
-                onToggleDedup={handleToggleDedup}
-                onCopy={handleCopyResult}
-                onExport={handleExport}
-                diffTarget={activeTab.diffTarget}
-              />
-            )
-          ) : parseState.ok ? (
-            <TreeView nodes={tree} onGeneratePath={handleGeneratePath} />
-          ) : (
-            <div className='json-empty'>输入合法 JSON 后，树形视图将显示在这里</div>
-          )}
+              )
+            : (hasExpr ? queryEmpty : !parseState.ok)
+                ? (
+                  <div className='json-empty'>
+                    {hasExpr ? '未匹配到结果' : '输入合法 JSON 后，将在此以代码视图显示'}
+                  </div>
+                  )
+                : (
+                  <ResultPanel
+                    nodes={hasExpr ? resultTree : tree}
+                    content={displayJson}
+                    count={hasExpr ? (queryState?.count ?? 0) : stats.lines}
+                    elapsed={hasExpr ? (queryState?.elapsed ?? 0) : parseState.elapsed}
+                    isArray={hasExpr ? Array.isArray(queryState?.data) : Array.isArray(parseState.data)}
+                    isDeduped={hasExpr ? (queryState?.deduped ?? false) : false}
+                    onToggleDedup={handleToggleDedup}
+                    onCopy={handleCopyResult}
+                    onExport={handleExport}
+                    diffTarget={diffContent}
+                    tabs={tabs}
+                    activeTabId={activeTabId}
+                    onDiffTargetChange={handleDiffTargetChange}
+                    onGeneratePath={handleGeneratePath}
+                    filterable={hasExpr}
+                    diffMode={activeTab.diffMode || 'exact'}
+                    onDiffModeChange={handleDiffModeChange}
+                  />
+                  )}
         </Pane>
       </div>
 
